@@ -1,7 +1,7 @@
 import pygame
 
 from base_classes import Board, Player, Piece, TileType
-from turn_logic import update_player_board, remove_ghost_pieces
+from turn_logic import update_player_board, remove_ghost_pieces, resolve_duels
 from board_gen import BOARD_WIDTH, BOARD_HEIGHT, generate_game
 from draw_config import TILE_SIZE, MAP_WIDTH, MAP_HEIGHT, BACKGROUND_COLOR, draw_board, selected_piece, draw_possible_moves, handle_click
 
@@ -42,6 +42,7 @@ def main():
                     current_view = players[1].board  # Show Player 2's board
                     current_player = players[1]
                 elif event.key == pygame.K_RETURN:
+                    resolve_duels(board_state)
                     remove_ghost_pieces(board_state)
                     update_player_board(players[0], board_state)
                     update_player_board(players[1], board_state)

@@ -1,3 +1,4 @@
+import random
 from base_classes import Board, Player, TileType, Piece
 
 def move_piece(board: Board, piece: Piece, x: int, y: int):
@@ -16,13 +17,20 @@ def move_piece(board: Board, piece: Piece, x: int, y: int):
     for p in new_tile.pieces:
         if p.owner == piece.owner and p.is_ghost and p.number == piece.number:
             p.is_ghost = False
-            kill_piece(board, piece)
+            remove_piece(board, piece)
             return
     piece.is_ghost = True
     new_tile.pieces.append(Piece(piece.number, (x, y), piece.owner, False))
 
-def kill_piece(board: Board, piece: Piece):
+def remove_piece(board: Board, piece: Piece):
     board.get_tile(piece.position[0], piece.position[1]).pieces.remove(piece)
+
+def kill_piece(board: Board, piece: Piece):
+    for x in range(board.height):
+        for y in range(board.width):
+            for p in board.get_tile(x, y).pieces:
+                if p.owner == piece.owner and p.number == piece.number:
+                    board.get_tile(x, y).pieces.remove(p)
 
 def clear_vision(player: Player):
     for x in range(player.board.height):
@@ -104,3 +112,29 @@ def remove_ghost_pieces(board: Board):
     for x in range(board.height):
         for y in range(board.width):
             board.tiles[x][y].pieces = [p for p in board.tiles[x][y].pieces if not p.is_ghost]
+
+def resolve_duels(game_board: Board):
+    for x in range(game_board.height):
+        for y in range(game_board.width):
+            tile = game_board.get_tile(x, y)
+            if not tile.is_floor() or len(tile.pieces) < 2:
+                continue
+
+            pieces_by_owner = {}
+
+            for piece in tile.pieces:
+                if piece.owner not in pieces_by_owner:
+                    pieces_by_owner[piece.owner] = []
+                pieces_by_owner[piece.owner].append(piece)
+
+            if len(pieces_by_owner) > 1:
+                participants = [pieces[0] for pieces in pieces_by_owner.values()]
+                print(f"Participants: {[p.number for p in participants]}")
+                rolls = {piece: random.randint(1, 6) for piece in participants}
+                min_roll = min(rolls.values())
+
+                losers = [piece for piece, roll in rolls.items() if roll == min_roll]
+                print(f"Losers: {[p.number for p in losers]}")
+                for loser in losers:
+                    kill_piece(game_board, loser)
+                    print(f"Player {loser.owner.name}'s piece {loser.number} was killed")
