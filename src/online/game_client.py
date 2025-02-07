@@ -24,9 +24,9 @@ def await_result():
             return json.loads(board_view, object_hook = lambda d: SimpleNamespace(**d))
 
 def send_actions(player_actions):
-    client_socket.sendall(json.dumps(player_actions.__dict__))
+    client_socket.sendall(json.dumps(player_actions.__dict__).encode())
     print("Sent player actions to server.")
 
 def send_name(name):
-    client_socket.sendall(json.dumps(player_actions.__dict__))
+    client_socket.sendall(name.encode())
     print("Sent player name to server.")
