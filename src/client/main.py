@@ -4,10 +4,9 @@ import json
 import select
 import sys
 
-from drawing import draw_welcome_page, draw_waiting_page
-
-sys.path.append("../")
+from client.drawing import draw_welcome_page, draw_waiting_page
 from common.dto import PlayerInfoDTO
+
 
 def connect_to_server(address):
     client_socket = socket.create_connection(address)
