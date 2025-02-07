@@ -108,9 +108,9 @@ class Board:
         return clear_tiles
 
 class PlayerTurn:
-    def __init__(self, player_name, pieces):
+    def __init__(self, player_name, pieces_actions):
         self.player_name = player_name
-        self.pieces = pieces
+        self.pieces_actions = pieces_actions
 
 class PieceAction:
     def __init__(self, piece_number, actions):

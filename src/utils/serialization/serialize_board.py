@@ -8,18 +8,22 @@ class BoardEncoder(json.JSONEncoder):
             encoded_board["class"] = "Board"
 
             encoded_tiles = encoded_board["tiles"]
+            encoded_tiles.clear()
 
-            for idx, tilesX in enumerate(obj.tiles):
-                for idy, tileY in enumerate(tilesX):
+            for tilesX in obj.tiles:
+                for tileY in tilesX:
                     encoded_tiles[idx][idy] = tileY.__dict__
                     encoded_tiles[idx][idy]["class"] = "Tile"
 
                     encoded_tiles[idx][idy]["type"] = tileY.type.value
 
+                    encoded_pieces = encoded_tiles[idx][idy]["pieces"]
+                    encoded_pieces.clear()
+
                     for piece in tileY.pieces:
                         encoded_piece = piece.__dict__
                         encoded_piece["class"] = "Piece"
-                        encoded_tiles[idx][idy]["pieces"].append(encoded_piece)
+                        encoded_pieces.append(encoded_piece)
 
             return encoded_board
 
@@ -35,10 +39,10 @@ def as_board(dct):
 
         return board
     elif dct["class"] == "Tile":
-            tile = Tile(TileType(dct["type"]))
-            tile.pieces = dct["pieces"]
+        tile = Tile(TileType(dct["type"]))
+        tile.pieces = dct["pieces"]
 
-            return tile
+        return tile
     elif dct["class"] == "Piece":
         return Piece(dct["number"], dct["position"], dct["owner"], dct["is_ghost"])
 

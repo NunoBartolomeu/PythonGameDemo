@@ -12,6 +12,7 @@ import sys
 
 sys.path.append("../")
 from common.dto import PlayerInfoDTO, board_to_json
+from utils.serialization.serialize_board import BoardEncoder
 
 IP_ADDRESS = "localhost"
 IP_PORT = 8000
@@ -97,7 +98,7 @@ def send_message(conn, message):
 ################################# Send data ####################
 
 def send_board(conn, board):
-    send_message(conn, board_to_json(board))
+    send_message(conn, json.dumps(board, cls = BoardEncoder))
 
 def send_num_players(conn, num_players):
     send_message(conn, num_players.__str__())
@@ -118,7 +119,7 @@ def receive_player_info(conn):
 
 def receive_turn(conn):
     data = receive_message(conn)
-    pass
+    return json.loads(data, object_hook = as_player_turn)
 
 ################################ Main ####################
 
@@ -157,7 +158,10 @@ def main():
                 game = apply_turn(game, turns)
                 turns = []
                 for conn in lobby.conn:
-                    send_board(conn, )
+                    for player in game[1]:
+                        if player.name == lobby.players[conn].name:
+                            send_board(conn, player.board)
+                            break
 
 if __name__ == "__main__":
     main()
