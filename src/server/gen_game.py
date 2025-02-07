@@ -67,6 +67,26 @@ def setSpawns(board: Board, num_spawns: int) -> List[tuple[int, int]]:
     
     return conv_spawns
 
+def setExits(board: Board, num_exits: int) -> List[tuple[int, int]]:
+    potential_exits = []
+    
+    for x in range(board.height):
+        for y in range(board.width):
+            if board.get_tile(x, y).type == TileType.FLOOR:
+                neighbors = board.get_neighbors(x, y)
+                floor_neighbors = sum(1 for nx, ny in neighbors if board.get_tile(nx, ny).type == TileType.FLOOR)
+                
+                if floor_neighbors == 3:
+                    potential_exits.append((x, y))
+
+    random.shuffle(potential_exits)
+    conv_exits = potential_exits[:num_exits]
+
+    for x, y in conv_exits:
+        board.get_tile(x, y).type = TileType.EXIT
+    
+    return conv_exits
+
 def spawnStartingPieces(board: Board, player: Player):
     x, y = player.spawn
     neighbors = board.get_neighbors(x, y)
@@ -87,11 +107,10 @@ def generate_board(width, height) -> Board:
             return board
 
 def generate_game(player_infos: List[PlayerInfoDTO], width, height):
-    print("Generating game")
     board = generate_board(width, height)
-    print("Board generated")
     spawns = setSpawns(board, len(player_infos))
-    print("Spawns set")
+    exits = setExits(board, len(player_infos) * 2 + 1)
+     
     players = []
     for i, player_info in enumerate(player_infos):
         print(f"Generating player {i}, {player_info}")

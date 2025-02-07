@@ -7,6 +7,7 @@ class Player:
         self.color = color
         self.board = Board(board_width, board_height, TileType.UNKNOWN)
         self.spawn = spawn
+        self.pieces_exited = 0
 
 class Piece:
     def __init__(self, number: int, position: tuple[int, int], owner: 'Player', is_ghost: bool):
@@ -57,6 +58,7 @@ class Board:
         self.tiles: List[List[Tile]] = [[Tile(base_tile_type) for _ in range(width)] for _ in range(height)]
         self.width = width
         self.height = height
+        self.gameover = False
         
     def get_neighbors(self, x, y, include_diagonals=False):
         directions = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]  # up, down, left, right
