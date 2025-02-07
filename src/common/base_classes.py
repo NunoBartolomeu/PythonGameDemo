@@ -2,14 +2,16 @@ from enum import Enum
 from typing import List
 
 class Player:
-    def __init__(self, name: str, board_width: int, board_height: int, spawn: tuple[int, int]):
+    def __init__(self, name: str, color, board_width: int, board_height: int, spawn: tuple[int, int]):
         self.name = name
+        self.color = color
         self.board = Board(board_width, board_height, TileType.UNKNOWN)
         self.spawn = spawn
 
 class Piece:
     def __init__(self, number: int, position: tuple[int, int], owner: 'Player', is_ghost: bool):
         self.owner = owner
+        self.color = owner.color
         self.number = number
         self.position = position
         self.is_ghost = is_ghost

@@ -1,9 +1,12 @@
 from typing import List
 import random
-from base_classes import Board, Player, Piece, TileType
 
-BOARD_WIDTH = 100
-BOARD_HEIGHT = 50
+import sys
+
+sys.path.append("../")
+from common.base_classes import Board, Player, Piece, TileType
+from common.dto import PlayerInfoDTO
+
 TARGET_FLOOR_PERCENTAGE = 0.35
 
 def mine_board(board: Board):
@@ -75,7 +78,7 @@ def spawnStartingPieces(board: Board, player: Player):
             if piece_number > 3:
                 break
 
-def generate_board(width=BOARD_WIDTH, height=BOARD_HEIGHT) -> Board:
+def generate_board(width, height) -> Board:
     while True:
         board = Board(width, height, TileType.WALL)
         mine_board(board)
@@ -83,13 +86,16 @@ def generate_board(width=BOARD_WIDTH, height=BOARD_HEIGHT) -> Board:
         if wall_percentage(board) > TARGET_FLOOR_PERCENTAGE:
             return board
 
-def generate_game(player_names: List[str], width=BOARD_WIDTH, height=BOARD_HEIGHT):
+def generate_game(player_infos: List[PlayerInfoDTO], width, height):
+    print("Generating game")
     board = generate_board(width, height)
-    spawns = setSpawns(board, len(player_names))
-
+    print("Board generated")
+    spawns = setSpawns(board, len(player_infos))
+    print("Spawns set")
     players = []
-    for i, player_name in enumerate(player_names):
-        player = Player(player_name, board.width, board.height, spawns[i])
+    for i, player_info in enumerate(player_infos):
+        print(f"Generating player {i}, {player_info}")
+        player = Player(player_info.name, player_info.color, board.width, board.height, spawns[i])
         spawnStartingPieces(board, player)
         players.append(player)
     return board, players
