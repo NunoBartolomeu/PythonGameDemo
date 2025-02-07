@@ -35,7 +35,7 @@ def kill_piece(board: Board, piece: Piece):
 def clear_vision(player: Player):
     for x in range(player.board.height):
         for y in range(player.board.width):
-            if player.board.get_tile(x, y).type == TileType.UNKNOW:
+            if player.board.get_tile(x, y).type == TileType.UNKNOWN:
                 continue
             if player.board.get_tile(x, y).is_floor():
                 player.board.get_tile(x, y).type = TileType.FOG_FLOOR

@@ -4,7 +4,7 @@ from typing import List
 class Player:
     def __init__(self, name: str, board_width: int, board_height: int, spawn: tuple[int, int]):
         self.name = name
-        self.board = Board(board_width, board_height, TileType.UNKNOW)
+        self.board = Board(board_width, board_height, TileType.UNKNOWN)
         self.spawn = spawn
 
 class Piece:
@@ -15,7 +15,7 @@ class Piece:
         self.is_ghost = is_ghost
 
 class TileType(Enum):
-    UNKNOW = "UNKNOWN"
+    UNKNOWN = "UNKNOWN"
 
     FOG_VOID = "FOG_VOID"
     FOG_WALL = "FOG_WALL"
@@ -42,7 +42,7 @@ class Tile:
         return self.type in [TileType.WALL, TileType.FOG_WALL]
     
     def is_clear(self) -> bool:
-        return self.type not in [TileType.UNKNOW, TileType.FOG_VOID, TileType.FOG_WALL, TileType.FOG_FLOOR]
+        return self.type not in [TileType.UNKNOWN, TileType.FOG_VOID, TileType.FOG_WALL, TileType.FOG_FLOOR]
 
     def break_wall(self):
         if self.type == TileType.WALL:
@@ -104,3 +104,22 @@ class Board:
                 if self.get_tile(x, y).is_clear():
                     clear_tiles.add((x, y))
         return clear_tiles
+
+class PlayerTurn:
+    def __init__(self, player_name, pieces):
+        self.player_name = player_name
+        self.pieces = pieces
+
+class PieceAction:
+    def __init__(self, piece_number, actions):
+        self.number = piece_number
+        self.actions = actions
+
+class Action:
+    def __init__(self, action_type, args):
+        self.type = action_type
+        self.args = args
+
+class ActionType(Enum):
+    MOVE = "MOVE"
+    BREAK = "BREAK_WALL"

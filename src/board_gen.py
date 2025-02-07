@@ -83,8 +83,8 @@ def generate_board(width=BOARD_WIDTH, height=BOARD_HEIGHT) -> Board:
         if wall_percentage(board) > TARGET_FLOOR_PERCENTAGE:
             return board
 
-def generate_game(player_names: List[str]):
-    board = generate_board()
+def generate_game(player_names: List[str], width=BOARD_WIDTH, height=BOARD_HEIGHT):
+    board = generate_board(width, height)
     spawns = setSpawns(board, len(player_names))
 
     players = []

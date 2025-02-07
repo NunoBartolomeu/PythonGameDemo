@@ -15,7 +15,7 @@ MAP_HEIGHT = BOARD_HEIGHT * TILE_SIZE
 
 # Colors
 class TileColors(Enum):
-    UNKNOW = (0, 0, 0)
+    UNKNOWN = (0, 0, 0)
 
     FOG_VOID = (50, 50, 50)
     FOG_WALL = (100, 100, 100)
