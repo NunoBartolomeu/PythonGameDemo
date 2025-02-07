@@ -6,29 +6,37 @@ from base_classes import Board, Player, ActionType
 from turn_logic import update_player_board, remove_ghost_pieces, resolve_duels
 from board_gen import BOARD_WIDTH, BOARD_HEIGHT, generate_game
 from draw_config import handle_click
+from utils.serialization.serialize_board import BoardEncoder
 
 def start_server(address, num_players = 2, board_width = BOARD_WIDTH, board_height = BOARD_HEIGHT):
-   # if socket.has_dualstack_ipv6():
-   #     server_socket = socket.create_server(address, family = socket.AF_INET6, dualstack_ipv6 = True)
-   # else:
-    server_socket = socket.create_server(address, family = socket.AF_INET)
+    server_socket = None
+    if socket.has_dualstack_ipv6():
+        server_socket = socket.create_server(address, family = socket.AF_INET6, dualstack_ipv6 = True)
+    else:
+        server_socket = socket.create_server(address, family = socket.AF_INET)
     server_socket.listen(num_players)
     print(f'Server listening on port {address[1]}...')
-    threading.Thread(target = lobby, args = (num_players, server_socket)).start()
+    threading.Thread(target = lobby, args = (num_players, server_socket, board_width, board_height)).start()
 
-def lobby(num_players, server_socket):
+def lobby(num_players, server_socket, board_width, board_height):
     print("Waiting for players to join.")
     clients = {}
-    while len(clients) < num_players:
+    threads = []
+    while len(threads) < num_players:
         conn, _ = server_socket.accept()
-        threading.Thread(target = getPlayerName, args = (conn, clients)).start()
+        thread = threading.Thread(target = getPlayerName, args = (conn, clients))
+        thread.start()
+        threads.append(thread)
+
+    for thread in threads:
+        thread.join()
 
     print("All players joined, starting game.")
-    threading.Thread(target = start_game, args = (server_socket, clients)).start()
+    threading.Thread(target = start_game, args = (server_socket, clients, board_width, board_height)).start()
 
-def start_game(server_socket, clients):
+def start_game(server_socket, clients, board_width, board_height):
     print("Game started.")
-    board_state, players = generate_game(clients.keys())
+    board_state, players = generate_game(clients.keys(), 10, 10)
 
     while True:
         threads = []
@@ -45,7 +53,7 @@ def start_game(server_socket, clients):
         remove_ghost_pieces(board_state)
         for player in players:
             update_player_board(player, board_state)
-        
+
         if check_loss(board_state, players, clients):
             game_end(server_socket)
             break
@@ -58,14 +66,17 @@ def getPlayerName(conn, clients):
         print("A player did not put a name.")
         conn.close()
         return
+    #if clients[name]:
+     #   print(f"Player {name} has already joined.")
+    #    return
     clients[name] = conn
+    #conn.sendall("Joined game.".encode())
     print(f"Player {name} has joined the game.")
 
 def handle_player(board, player, clients):
     conn = clients[player.name]
 
-    # For some reason, can't serialize
-    conn.sendall(json.dumps(player.board.__dict__).encode())
+    conn.sendall(json.dumps(player.board, cls = BoardEncoder).encode())
 
     while True:
         player_actions = conn.recv(4096)
@@ -106,7 +117,7 @@ def game_end(server_socket):
     server_socket.close()
 
 def main():
-    start_server(("127.0.0.1", 8000))
+    start_server(("localhost", 8000))
 
 if __name__ == "__main__":
     main()

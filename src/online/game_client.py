@@ -1,7 +1,7 @@
 import socket
 import threading
 import json
-from types import SimpleNamespace
+from utils.serialization.serialize_board import as_board
 
 def connect_to_server(address):
     client_socket = socket.create_connection(address)
@@ -15,11 +15,12 @@ def connect_to_server(address):
 
 def await_result(client_socket):
     while True:
-        result = client_socket.recv(4096)
+        # Need big values for board, otherwise it won't be send
+        result = client_socket.recv(1 * 10 **6)
         if result:
             board_view = result.decode()
             print(f"Player board received: {board_view}")
-            return json.loads(board_view, object_hook = lambda d: SimpleNamespace(**d))
+            return json.loads(board_view, object_hook = as_board)
 
 def send_actions(client_socket, player_actions):
     client_socket.sendall(json.dumps(player_actions.__dict__).encode())
@@ -30,8 +31,9 @@ def send_name(client_socket, name):
     print("Sent player name to server.")
 
 def main():
-    client_socket = connect_to_server(("127.0.0.1", 8000))
-    send_name(client_socket, "Name3")
+    client_socket = connect_to_server(("localhost", 8000))
+    send_name(client_socket, "Name1")
+    print(await_result(client_socket))
 
 if __name__ == "__main__":
     main()
