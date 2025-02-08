@@ -8,7 +8,7 @@ from common.base_classes import Board, Player, Piece, TileType
 
 ################################# Drawing Configuration #############################
 
-BOARD_WIDTH = 100
+BOARD_WIDTH = 10
 BOARD_HEIGHT = 50
 
 # Sizes
@@ -45,19 +45,21 @@ class PieceColors(Enum):
 
 BACKGROUND_COLOR = (100, 100, 100)
 
-def draw_board(screen, board: Board, player: Player):
+def draw_board(screen, board: Board):
+    screen.fill(BLACK)
+
     for x in range(board.height):
         for y in range(board.width):
-            tile = board.tiles[x][y]
+            tile = board.get_tile(x, y)
             color = TileColors[tile.type.name].value
             pygame.draw.rect(screen, color, (y * TILE_SIZE, x * TILE_SIZE, TILE_SIZE, TILE_SIZE))
 
             for piece in tile.pieces:
                 piece_color = None
                 if piece.is_ghost:
-                    piece_color = PieceColors.ALLY_GHOST_PIECE.value if piece.owner == player else PieceColors.ENEMY_GHOST_PIECE.value
+                    piece_color = (piece.color[0] + 50, piece.color[1] + 50, piece.color[2] + 50)
                 else:
-                    piece_color = PieceColors.ALLY_PIECE.value if piece.owner == player else PieceColors.ENEMY_PIECE.value 
+                    piece_color = piece.color
                 center = (y * TILE_SIZE + TILE_SIZE // 2, x * TILE_SIZE + TILE_SIZE // 2)
                 pygame.draw.circle(screen, piece_color, center, TILE_SIZE // 3)
 
@@ -70,20 +72,6 @@ def draw_possible_moves(screen, board: Board, piece: Piece):
         if tile.is_floor() and not any(p for p in tile.pieces if not p.is_ghost):
             center = (y * TILE_SIZE + TILE_SIZE // 2, x * TILE_SIZE + TILE_SIZE // 2)
             pygame.draw.circle(screen, PieceColors.MOVE_DOT.value, center, TILE_SIZE // 6)
-
-def handle_click(board: Board, x: int, y: int, selected_piece: Optional[Piece]):
-    clicked_tile = board.tiles[x][y]
-    
-    for piece in clicked_tile.pieces:
-        if not piece.is_ghost:
-            return piece
-            
-    if selected_piece:
-        possible_moves = board.get_neighbors(selected_piece.position[0], selected_piece.position[1])
-        if (x, y) in possible_moves and board.tiles[x][y].is_floor():
-            #move_piece(board, selected_piece, x, y)
-            #update_player_board(selected_piece.owner, board)
-            return None
 
 ################################# Pages #############################
 
@@ -131,3 +119,8 @@ def draw_waiting_page(screen, players, num_players):
         draw_text(screen, f"-> {player.name}", width // 4, y_offset)
         pygame.draw.rect(screen, player.color, (width // 2, y_offset, width // 20, height // 20))
         y_offset += height // 15
+
+def draw_gameover(screen):
+    screen.fill(BLACK)
+    width, height = screen.get_size()
+    draw_text(screen, "Game Over", width // 3, height // 2)

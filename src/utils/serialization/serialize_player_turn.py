@@ -1,39 +1,42 @@
 import json
-from base_classes import PlayerTurn, PieceAction, Action, ActionType
+from common.base_classes import PlayerTurn, Action, ActionType
 
 class PlayerTurnEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, PlayerTurn):
-            encoded_turn = obj.__dict__
-            encoded_turn["class"] = "PlayerTurn"
+            encoded_turn = {
+                "class": "PlayerTurn",
+                "player_name": obj.player_name,
+                "pieces_actions": {}
+            }
 
-            encoded_pieces_actions = encoded_turn["pieces_actions"]
-            encoded_pieces_actions.clear()
+            for piece_number, actions in obj.pieces_actions.items():
+                encoded_turn["pieces_actions"][piece_number] = []
+                for action in actions:
+                    encoded_action = {
+                        "class": "Action",
+                        "action_type": action.type.value,
+                        "args": []
+                    }
 
-            for piece_action in obj.pieces:
-                encoded_piece_action = piece_actions.__dict__
-                encoded_piece_action["class"] = "PieceAction"
-
-                encoded_actions = encoded_piece_action["actions"]
-                encoded_actions.clear()
-
-                for action in piece_action.actions:
-                    encoded_action = action.__dict__
-                    encoded_action["type"] = action.type.value
-                    encoded_action["class"] = "Action"
-                    encoded_actions.append(encoded_action)
-
-                encoded_pieces_actions.append(encoded_piece_action)
+                    for arg in action.args:
+                        encoded_action["args"].append(arg)
+                    encoded_turn["pieces_actions"][piece_number].append(encoded_action)
 
             return encoded_turn
 
         return super().default(obj)
 
 def as_player_turn(dct):
+    if "class" not in dct:
+        return dct
+
     if dct["class"] == "PlayerTurn":
-        return PlayerTurn(dct["player_name"], dct["pieces_actions"])
-    elif dct["class"] == "PieceAction":
-        return PieceAction(dct["piece_number"], dct["actions"])
+        player_turn = PlayerTurn(dct["player_name"])
+        player_turn.pieces_actions = dct["pieces_actions"]
+
+        return player_turn
+
     elif dct["class"] == "Action":
         return Action(ActionType(dct["action_type"]), dct["args"])
 

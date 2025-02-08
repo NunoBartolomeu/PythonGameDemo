@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List
 
 class Player:
-    def __init__(self, name: str, color, board_width: int, board_height: int, spawn: tuple[int, int]):
+    def __init__(self, name: str, color: tuple[int, int, int], board_width: int, board_height: int, spawn: tuple[int, int]):
         self.name = name
         self.color = color
         self.board = Board(board_width, board_height, TileType.UNKNOWN)
@@ -10,10 +10,10 @@ class Player:
         self.pieces_exited = 0
 
 class Piece:
-    def __init__(self, number: int, position: tuple[int, int], owner: 'Player', is_ghost: bool):
-        self.owner = owner
-        self.color = owner.color
+    def __init__(self, number: int, position: tuple[int, int], owner: str, is_ghost: bool, color: tuple[int, int, int]):
         self.number = number
+        self.owner = owner
+        self.color = color
         self.position = position
         self.is_ghost = is_ghost
 
@@ -91,7 +91,7 @@ class Board:
         for x in range(self.height):
             for y in range(self.width):
                 for piece in self.tiles[x][y].pieces:
-                    if piece.owner == player and (include_ghosts or not piece.is_ghost):
+                    if piece.owner == player.name and (include_ghosts or not piece.is_ghost):
                         pieces.append(piece)
         return pieces
 
@@ -110,14 +110,22 @@ class Board:
         return clear_tiles
 
 class PlayerTurn:
-    def __init__(self, player_name, pieces_actions):
+    def __init__(self, player_name):
         self.player_name = player_name
-        self.pieces_actions = pieces_actions
+        self.pieces_actions = {}
 
-class PieceAction:
-    def __init__(self, piece_number, actions):
-        self.number = piece_number
-        self.actions = actions
+    def add_move_action(self, piece, to):
+        if piece.number not in self.pieces_actions:
+            self.pieces_actions[piece.number] = []
+        self.pieces_actions[piece.number].append(Action(ActionType.MOVE, [piece.position, to]))
+
+    def add_break_action(self, piece, wall_position):
+        if piece.number not in self.pieces_actions:
+            self.pieces_actions[piece.number] = []
+        self.pieces_actions[piece.number].append(Action(ActionType.BREAK, [piece.position, wall_position]))
+
+    def clear_actions(self):
+        self.pieces_actions = {}
 
 class Action:
     def __init__(self, action_type, args):

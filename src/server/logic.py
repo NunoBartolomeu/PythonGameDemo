@@ -1,5 +1,5 @@
 import random
-from common.base_classes import Board, Player, TileType, Piece
+from common.base_classes import Board, Player, TileType, Piece, PlayerTurn, ActionType
 
 def move_piece(board: Board, piece: Piece, x: int, y: int):
     if piece.is_ghost:
@@ -25,7 +25,17 @@ def move_piece(board: Board, piece: Piece, x: int, y: int):
             remove_piece(board, piece)
             return
     piece.is_ghost = True
-    new_tile.pieces.append(Piece(piece.number, (x, y), piece.owner, False))
+    new_tile.pieces.append(Piece(piece.number, (x, y), piece.owner, False, piece.color))
+
+def break_wall(board: Board, piece: Piece, x: int, y: int):
+    if not piece.is_ghost:
+        return False
+
+    if not board.can_break_wall(x, y):
+        return False
+
+    board.get_tile(x, y).type = TileType.FLOOR
+    return True
 
 def remove_piece(board: Board, piece: Piece):
     board.get_tile(piece.position[0], piece.position[1]).pieces.remove(piece)
@@ -75,6 +85,7 @@ def update_own_pieces(player: Player, board: Board):
     clear_pieces(player)
     pieces = board.get_pieces(player, True)
     for piece in pieces:
+        print("Added piece.")
         player.board.get_tile(piece.position[0], piece.position[1]).pieces.append(piece)
 
 
@@ -105,7 +116,9 @@ def update_opponent_pieces(player: Player, board: Board):
     clear_vision = player.board.get_clear_vision()
     for x, y in clear_vision:
         for piece in board.get_tile(x, y).pieces:
-            if piece.owner != player:
+            print("Found piece.")
+            if piece.owner != player.name:
+                print("Enemy.")
                 player.board.get_tile(x, y).pieces.append(piece)
 
 def update_player_board(player: Player, board: Board):
@@ -145,8 +158,25 @@ def resolve_duels(game_board: Board):
                     kill_piece(game_board, loser)
                     print(f"Player {loser.owner.name}'s piece {loser.number} was killed")
 
-def apply_turn():
-    pass
+def apply_turn(board: Board, players: list["Player"], turns: list["PlayerTurn"]):
+    for turn in turns:
+        player = None
+        for pl in players:
+            if pl.name == turn.player_name:
+                player = pl
+                break
+
+        for p_number, actions in turn.pieces_actions.items():
+            for action in actions:
+                if action.type == ActionType.MOVE:
+                    piece = board.get_piece(action.args[0][0], action.args[0][1])
+                    move_piece(board, piece, action.args[1][0], action.args[1][1])
+                elif action.type == ActionType.BREAK:
+                    piece = board.get_piece(action.args[0][0], action.args[0][1])
+                    break_wall(board, piece, action.args[1][0], action.args[1][1])
+
+    for player in players:
+        update_player_board(player, board)
 
 def piece_exited(board: Board, player: Player, piece: Piece):
     if piece.is_ghost:

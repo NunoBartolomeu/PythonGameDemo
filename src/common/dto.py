@@ -15,8 +15,9 @@ def piece_to_dict(piece: Piece):
     return {
         "number": piece.number,
         "position": piece.position,
-        "owner": piece.owner.name,
-        "is_ghost": piece.is_ghost
+        "owner": piece.owner,
+        "is_ghost": piece.is_ghost,
+        "color": piece.color
     }
 
 def tile_to_dict(tile: Tile):

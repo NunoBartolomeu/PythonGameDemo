@@ -1,49 +1,59 @@
 import json
-from base_classes import Board, Piece, Tile, TileType
+from common.base_classes import Board, Piece, Tile, TileType
 
 class BoardEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Board):
-            encoded_board = obj.__dict__
-            encoded_board["class"] = "Board"
+            encoded_board = {
+                "class": "Board",
+                "width": obj.width,
+                "height": obj.height,
+                "gameover": obj.gameover,
+                "tiles": []
+            }
 
-            encoded_tiles = encoded_board["tiles"]
-            encoded_tiles.clear()
+            for row in obj.tiles:
+                encoded_row = []
+                for tile in row:
+                    encoded_tile = {
+                        "class": "Tile",
+                        "type": tile.type.value,
+                        "pieces": []
+                    }
+                    for piece in tile.pieces:
+                        encoded_piece = {
+                            "class": "Piece",
+                            "number": piece.number,
+                            "position": piece.position,
+                            "owner": piece.owner,
+                            "is_ghost": piece.is_ghost,
+                            "color": piece.color
+                        }
+                        encoded_tile["pieces"].append(encoded_piece)
 
-            for tilesX in obj.tiles:
-                for tileY in tilesX:
-                    encoded_tiles[idx][idy] = tileY.__dict__
-                    encoded_tiles[idx][idy]["class"] = "Tile"
-
-                    encoded_tiles[idx][idy]["type"] = tileY.type.value
-
-                    encoded_pieces = encoded_tiles[idx][idy]["pieces"]
-                    encoded_pieces.clear()
-
-                    for piece in tileY.pieces:
-                        encoded_piece = piece.__dict__
-                        encoded_piece["class"] = "Piece"
-                        encoded_pieces.append(encoded_piece)
+                    encoded_row.append(encoded_tile)
+                encoded_board["tiles"].append(encoded_row)
 
             return encoded_board
 
         return super().default(obj)
 
 def as_board(dct):
-    # Tiles have to be replaced, maybe shouldn't initialize tiles inside constructor or use another class
-
     if dct["class"] == "Board":
         board = Board(dct["width"], dct["height"], TileType.WALL)
+        board.gameover = dct["gameover"]
 
         board.tiles = dct["tiles"]
 
         return board
+
     elif dct["class"] == "Tile":
         tile = Tile(TileType(dct["type"]))
         tile.pieces = dct["pieces"]
 
         return tile
+    
     elif dct["class"] == "Piece":
-        return Piece(dct["number"], dct["position"], dct["owner"], dct["is_ghost"])
+        return Piece(dct["number"], dct["position"], dct["owner"], dct["is_ghost"], dct["color"])
 
     return dct

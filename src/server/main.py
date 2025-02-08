@@ -13,12 +13,13 @@ import sys
 sys.path.append("../")
 from common.dto import PlayerInfoDTO, board_to_json
 from utils.serialization.serialize_board import BoardEncoder
+from utils.serialization.serialize_player_turn import as_player_turn
 
 IP_ADDRESS = "localhost"
 IP_PORT = 8000
 
-NUM_PLAYERS = 2
-BOARD_WIDTH = 100
+NUM_PLAYERS = 1
+BOARD_WIDTH = 10
 BOARD_HEIGHT = 50
 
 class Lobby:
@@ -73,7 +74,7 @@ def get_connection(server_socket, timeout):
         print(f"Error accepting connection: {e}")
         return None
 
-def receive_message(conn, buffer_size=4096, timeout=10):
+def receive_message(conn, buffer_size=(1 * 10 ** 9), timeout=10):
     try:
         conn.settimeout(timeout)  # Set the timeout here
         data = conn.recv(buffer_size).decode()
@@ -90,12 +91,20 @@ def receive_message(conn, buffer_size=4096, timeout=10):
 def send_message(conn, message):
     try:
         conn.sendall(message.encode())
-        print(f"Sent message: {message}")
+        #print(f"Sent message: {message}")
     except Exception as e:
         print(f"Error sending message: {e}")
 
 
 ################################# Send data ####################
+
+def send_all_boards(lobby, players):
+    for conn in lobby.conn:
+        for player in players:
+            if player.name == lobby.players[conn].name:
+                send_board(conn, player.board)
+                break
+    print("Boards sent.")
 
 def send_board(conn, board):
     send_message(conn, json.dumps(board, cls = BoardEncoder))
@@ -119,6 +128,7 @@ def receive_player_info(conn):
 
 def receive_turn(conn):
     data = receive_message(conn)
+    print(data)
     return json.loads(data, object_hook = as_player_turn)
 
 ################################ Main ####################
@@ -144,10 +154,10 @@ def main():
                 for conn in lobby.conn:
                     send_player_infos(conn, lobby.get_player_infos())
 
-    game = generate_game(lobby.get_player_infos(), BOARD_WIDTH, BOARD_HEIGHT)
+    board, players = generate_game(lobby.get_player_infos(), BOARD_WIDTH, BOARD_HEIGHT)
     print("Game generated.")
+    send_all_boards(lobby, players)
 
-    # TODO: Send each players board vision
     turns = []
     while True:
         ready_to_read, _, _ = select.select(lobby.conn, [], [], 1)
@@ -155,13 +165,9 @@ def main():
             turn = receive_turn(conn)
             turns.append(turn)
             if len(turns) == NUM_PLAYERS:
-                game = apply_turn(game, turns)
+                apply_turn(board, players, turns)
                 turns = []
-                for conn in lobby.conn:
-                    for player in game[1]:
-                        if player.name == lobby.players[conn].name:
-                            send_board(conn, player.board)
-                            break
+                send_all_boards(lobby, players)
 
 if __name__ == "__main__":
     main()

@@ -6,6 +6,7 @@ import sys
 sys.path.append("../")
 from common.base_classes import Board, Player, Piece, TileType
 from common.dto import PlayerInfoDTO
+from logic import update_player_board
 
 TARGET_FLOOR_PERCENTAGE = 0.35
 
@@ -93,7 +94,7 @@ def spawnStartingPieces(board: Board, player: Player):
     piece_number = 1
     for nx, ny in neighbors:
         if board.get_tile(nx, ny).type == TileType.FLOOR:
-            board.get_tile(nx, ny).pieces.append(Piece(piece_number, (nx, ny), player, False))
+            board.get_tile(nx, ny).pieces.append(Piece(piece_number, (nx, ny), player.name, False, player.color))
             piece_number += 1
             if piece_number > 3:
                 break
@@ -117,4 +118,7 @@ def generate_game(player_infos: List[PlayerInfoDTO], width, height):
         player = Player(player_info.name, player_info.color, board.width, board.height, spawns[i])
         spawnStartingPieces(board, player)
         players.append(player)
+    
+    for player in players:
+        update_player_board(player, board)
     return board, players
