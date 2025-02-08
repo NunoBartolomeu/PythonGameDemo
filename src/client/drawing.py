@@ -39,12 +39,9 @@ class TileColors(Enum):
 
     CLOSED_EXIT = (0, 0, 200)
 
-class PieceColors(Enum):
-    ALLY_PIECE = (255, 0, 0)
-    ALLY_GHOST_PIECE = (255, 180, 180)
-    ENEMY_PIECE = (0, 0, 255)
-    ENEMY_GHOST_PIECE = (180, 180, 255)
-    MOVE_DOT = (0, 0, 0)
+MOVE_DOT_COLOR = (0, 0, 0)
+MOVE_BACK_DOT_COLOR = (0, 255, 0)
+BREAK_DOT_COLOR = (255, 0, 0)
 
 BACKGROUND_COLOR = (100, 100, 100)
 
@@ -69,15 +66,33 @@ def draw_board(screen, board: Board):
 selected_piece = None
 
 def draw_possible_moves(screen, board: Board, piece: Piece, turn: PlayerTurn):
+    if not can_piece_act(turn, piece) or piece.is_ghost:
+        return
+    
     possible_moves = board.get_neighbors(piece.position[0], piece.position[1])
     for x, y in possible_moves:
         tile = board.tiles[x][y]
-        if tile.is_floor() and not any(p for p in tile.pieces if not p.is_ghost) and can_piece_act(turn, piece):
-            center = (y * TILE_SIZE + TILE_SIZE // 2, x * TILE_SIZE + TILE_SIZE // 2)
-            pygame.draw.circle(screen, PieceColors.MOVE_DOT.value, center, TILE_SIZE // 6)
-        elif any(p for p in tile.pieces if p.is_ghost and p.number == piece.number):
-            center = (y * TILE_SIZE + TILE_SIZE // 2, x * TILE_SIZE + TILE_SIZE // 2)
-            pygame.draw.circle(screen, PieceColors.MOVE_DOT.value, center, TILE_SIZE // 6)
+        center = (y * TILE_SIZE + TILE_SIZE // 2, x * TILE_SIZE + TILE_SIZE // 2)
+        color = None
+        if tile.is_wall():
+            color = BREAK_DOT_COLOR
+        elif tile.is_floor():
+            if len(tile.pieces) == 0: # No piece
+                color = MOVE_DOT_COLOR
+            else:
+                if any(not p.is_ghost for p in tile.pieces): # Active piece in tile
+                    if any(p.owner == piece.owner and not p.is_ghost for p in tile.pieces): # if active piece is from the same player
+                        continue
+                    elif any(p.owner != piece.owner and not p.is_ghost for p in tile.pieces): # if active piece is from another player
+                        color = MOVE_DOT_COLOR
+                else:
+                    if any(p.owner == piece.owner and p.number == piece.number for p in tile.pieces): # if is ghost of the same piece 
+                        color = MOVE_BACK_DOT_COLOR
+                    else: # if is ghost of another piece
+                        color = MOVE_DOT_COLOR
+        else:
+            continue
+        pygame.draw.circle(screen, color, center, TILE_SIZE // 6)
 
 ################################# Pages #############################
 
