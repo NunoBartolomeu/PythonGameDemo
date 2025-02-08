@@ -4,11 +4,12 @@ import pygame
 import sys
 
 sys.path.append("../")
-from common.base_classes import Board, Player, Piece, TileType
+from common.base_classes import Board, Player, Piece, TileType, PlayerTurn
+from logic import can_piece_act
 
 ################################# Drawing Configuration #############################
 
-BOARD_WIDTH = 10
+BOARD_WIDTH = 30
 BOARD_HEIGHT = 50
 
 # Sizes
@@ -35,6 +36,8 @@ class TileColors(Enum):
     EXIT = (0, 0, 255)
     CHEST = (255, 0, 0)
     TRAP = (255, 0, 0)
+
+    CLOSED_EXIT = (0, 0, 200)
 
 class PieceColors(Enum):
     ALLY_PIECE = (255, 0, 0)
@@ -65,11 +68,14 @@ def draw_board(screen, board: Board):
 
 selected_piece = None
 
-def draw_possible_moves(screen, board: Board, piece: Piece):
+def draw_possible_moves(screen, board: Board, piece: Piece, turn: PlayerTurn):
     possible_moves = board.get_neighbors(piece.position[0], piece.position[1])
     for x, y in possible_moves:
         tile = board.tiles[x][y]
-        if tile.is_floor() and not any(p for p in tile.pieces if not p.is_ghost):
+        if tile.is_floor() and not any(p for p in tile.pieces if not p.is_ghost) and can_piece_act(turn, piece):
+            center = (y * TILE_SIZE + TILE_SIZE // 2, x * TILE_SIZE + TILE_SIZE // 2)
+            pygame.draw.circle(screen, PieceColors.MOVE_DOT.value, center, TILE_SIZE // 6)
+        elif any(p for p in tile.pieces if p.is_ghost and p.number == piece.number):
             center = (y * TILE_SIZE + TILE_SIZE // 2, x * TILE_SIZE + TILE_SIZE // 2)
             pygame.draw.circle(screen, PieceColors.MOVE_DOT.value, center, TILE_SIZE // 6)
 

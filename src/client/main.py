@@ -6,8 +6,8 @@ import sys
 
 from drawing import draw_welcome_page, draw_waiting_page, draw_board, draw_possible_moves, draw_gameover, TILE_SIZE
 from common.dto import PlayerInfoDTO
-from utils.serialization.serialize_board import as_board
-from utils.serialization.serialize_player_turn import PlayerTurnEncoder
+from common.serialization.serialize_board import as_board
+from common.serialization.serialize_player_turn import PlayerTurnEncoder
 from common.base_classes import PlayerTurn
 from logic import move_piece, break_wall
 
@@ -58,7 +58,7 @@ def receive_player_board(client_socket):
 def send_turn(client_socket, turn):
     send_message(client_socket, json.dumps(turn, cls = PlayerTurnEncoder))
 
-################################# 
+#################################
 
 def main():
     client_socket = connect_to_server(("localhost", 8000))
@@ -125,7 +125,7 @@ def main():
     while page=="game":
         draw_board(screen, board)
         if selected_piece:
-            draw_possible_moves(screen, board, selected_piece)
+            draw_possible_moves(screen, board, selected_piece, turn)
         pygame.display.flip()
 
         for event in pygame.event.get():
@@ -143,11 +143,11 @@ def main():
                             selected_piece = piece
                 else:
                     if clicked_tile.is_floor():
-                        has_moved = move_piece(board, selected_piece, x, y)
+                        has_moved = move_piece(board, selected_piece, x, y, turn)
                         if has_moved:
                             turn.add_move_action(selected_piece, (x, y))
                     else:
-                        has_broken_wall = break_wall(board, selected_piece, x, y)
+                        has_broken_wall = break_wall(board, selected_piece, x, y, turn)
                         if has_broken_wall:
                             turn.add_break_action(selected_piece, (x, y))
                     selected_piece = None
@@ -166,6 +166,8 @@ def main():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                return
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 return
 
 if __name__ == "__main__":

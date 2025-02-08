@@ -1,7 +1,11 @@
 import random
 from common.base_classes import Board, Player, TileType, Piece, PlayerTurn, ActionType
+from common.constants import NUMBER_ACTIONS
 
-def move_piece(board: Board, piece: Piece, x: int, y: int):
+def move_piece(board: Board, piece: Piece, x: int, y: int, player: Player):
+    if not piece:
+        return
+
     if piece.is_ghost:
         return
 
@@ -12,7 +16,10 @@ def move_piece(board: Board, piece: Piece, x: int, y: int):
     new_tile = board.get_tile(x, y)
 
     if new_tile.type == TileType.EXIT:
-        piece_exited(board, piece.owner, piece)
+        piece_exited(board, player, piece, (x, y))
+        return
+    
+    if not new_tile.is_floor():
         return
 
     for p in new_tile.pieces:
@@ -28,7 +35,7 @@ def move_piece(board: Board, piece: Piece, x: int, y: int):
     new_tile.pieces.append(Piece(piece.number, (x, y), piece.owner, False, piece.color))
 
 def break_wall(board: Board, piece: Piece, x: int, y: int):
-    if not piece.is_ghost:
+    if not piece or piece.is_ghost:
         return False
 
     if not board.can_break_wall(x, y):
@@ -167,26 +174,31 @@ def apply_turn(board: Board, players: list["Player"], turns: list["PlayerTurn"])
                 break
 
         for p_number, actions in turn.pieces_actions.items():
+            number_actions = 0
             for action in actions:
+                if number_actions >= NUMBER_ACTIONS:
+                    return
+                number_actions += 1
                 if action.type == ActionType.MOVE:
                     piece = board.get_piece(action.args[0][0], action.args[0][1])
-                    move_piece(board, piece, action.args[1][0], action.args[1][1])
+                    move_piece(board, piece, action.args[1][0], action.args[1][1], player)
                 elif action.type == ActionType.BREAK:
                     piece = board.get_piece(action.args[0][0], action.args[0][1])
                     break_wall(board, piece, action.args[1][0], action.args[1][1])
 
+    remove_ghost_pieces(board)
     for player in players:
         update_player_board(player, board)
 
-def piece_exited(board: Board, player: Player, piece: Piece):
+def piece_exited(board: Board, player: Player, piece: Piece, new_position: tuple[int, int]):
     if piece.is_ghost:
         return False
     
-    if board.get_tile(piece.position[0], piece.position[1]).type == TileType.EXIT:
-        player.pieces_exited += 1
-        board.get_tile(piece.position[0], piece.position[1]).pieces.remove(piece)
-        board.get_tile(piece.position[0], piece.position[1]).type = TileType.FLOOR
+    player.pieces_exited += 1
+    board.get_tile(piece.position[0], piece.position[1]).pieces.remove(piece)
+    board.get_tile(new_position[0], new_position[1]).type = TileType.CLOSED_EXIT
 
 def is_game_over(board: Board, player: Player):
     if player.pieces_exited >= 3:
         board.gameover = True
+        player.board.gameover = True

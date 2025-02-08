@@ -54,6 +54,6 @@ def as_board(dct):
         return tile
     
     elif dct["class"] == "Piece":
-        return Piece(dct["number"], dct["position"], dct["owner"], dct["is_ghost"], dct["color"])
+        return Piece(dct["number"], (dct["position"][0], dct["position"][1]), dct["owner"], dct["is_ghost"], dct["color"])
 
     return dct

@@ -33,13 +33,15 @@ class TileType(Enum):
     CHEST = "CHEST"
     TRAP = "TRAP"
 
+    CLOSED_EXIT = "CLOSED_EXIT"
+
 class Tile:
     def __init__(self, tile_type: TileType):
         self.type = tile_type
         self.pieces: List['Piece'] = []
 
     def is_floor(self) -> bool:
-        return self.type in [TileType.FLOOR, TileType.FOG_FLOOR, TileType.SPAWN, TileType.EXIT, TileType.CHEST, TileType.TRAP]
+        return self.type in [TileType.FLOOR, TileType.FOG_FLOOR, TileType.SPAWN, TileType.EXIT, TileType.CHEST, TileType.TRAP, TileType.CLOSED_EXIT]
     
     def is_wall(self) -> bool:
         return self.type in [TileType.WALL, TileType.FOG_WALL]
@@ -117,6 +119,16 @@ class PlayerTurn:
     def add_move_action(self, piece, to):
         if piece.number not in self.pieces_actions:
             self.pieces_actions[piece.number] = []
+
+        for action in reversed(self.pieces_actions[piece.number]):
+            if action.type == ActionType.MOVE:
+                if action.args[0] == to:
+                    piece_actions = self.pieces_actions[piece.number]
+                    self.pieces_actions[piece.number] = piece_actions[0: piece_actions.index(action)]
+                    return
+                else:
+                    break
+
         self.pieces_actions[piece.number].append(Action(ActionType.MOVE, [piece.position, to]))
 
     def add_break_action(self, piece, wall_position):

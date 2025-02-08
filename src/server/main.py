@@ -4,7 +4,7 @@ import json
 import time
 from types import SimpleNamespace
 from gen_game import generate_game
-from logic import apply_turn
+from logic import apply_turn, remove_ghost_pieces
 import select
 
 import signal
@@ -12,14 +12,14 @@ import sys
 
 sys.path.append("../")
 from common.dto import PlayerInfoDTO, board_to_json
-from utils.serialization.serialize_board import BoardEncoder
-from utils.serialization.serialize_player_turn import as_player_turn
+from common.serialization.serialize_board import BoardEncoder
+from common.serialization.serialize_player_turn import as_player_turn
 
 IP_ADDRESS = "localhost"
 IP_PORT = 8000
 
 NUM_PLAYERS = 1
-BOARD_WIDTH = 10
+BOARD_WIDTH = 30
 BOARD_HEIGHT = 50
 
 class Lobby:
